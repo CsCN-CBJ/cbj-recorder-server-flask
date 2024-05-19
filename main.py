@@ -1,27 +1,36 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
 from config import *
+import localConfig
+import logging
+from cbjLibrary.log import initLogger
+from sqlUtils import RecorderSql
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
+baseLogger = initLogger(LOG_PATH, BASE_LOGGER_NAME)
+logger = logging.getLogger(API_LOGGER_NAME)
+sql = RecorderSql(logging.getLogger(STORAGE_LOGGER_NAME))
 
-@app.route('/')
-def hello_world():
-    return 'Hello, World!'
 
+def verifyToken(func):
+    """验证POST的token"""
 
-@app.route("/users", methods=["GET"])
-def get_all_users():
-    """获取所有用户信息"""
-    print(request.args.get("level"))
-    print(request.values.get("parentCode"))
-    return jsonify({"code": "200", "msg": "操作成功"})
+    def wrapper(*args, **kwargs):
+        token = request.json.get(VERIFICATION_COOKIE_NAME)
+        logger.info(f"function: {func.__name__}, token: {token}")
+        if token is None or token != localConfig.LOGIN_PASSWD:
+            return make_response("failed")
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 @app.route("/options", methods=["GET"])
-def get_options():
+def getOptions():
     """获取所有选项"""
+    logger.info(f"get options: {request.args}")
     choice = request.args.get("choice")
     ret = []
     if choice is None:
@@ -70,5 +79,44 @@ def get_options():
     return jsonify(ret)
 
 
-if __name__ == '__main__':
-    app.run('localhost', 5000, debug=True)
+@app.route("/tags", methods=["GET"])
+def getTags():
+    """获取所有标签"""
+    logger.info(f"get tags: {request.args}")
+    ret = sql.getTags(1)
+    return jsonify(ret)
+
+
+@app.route("/ledger", methods=["POST"])
+@verifyToken
+def addLedger():
+    """记录"""
+    logger.info(f"ledger: {request.json}")
+    choice = request.json.get("choice")
+    amount = request.json.get("amount")
+    tags = request.json.get("tags")
+    comment = request.json.get("comment")
+    if choice is None or amount is None or tags is None or comment is None:
+        return make_response("missing arguments")
+    if len(choice) != DEF_CHOICE_LENGTH or choice == DEF_DEFAULT * DEF_CHOICE_LENGTH:
+        return make_response("invalid choice")
+
+    sql.insertLedger(choice, amount, tags, comment)
+    return make_response("success")
+
+
+@app.route("/login", methods=["POST"])
+def login():
+    """登录"""
+    logger.info(f"login: {request.json}")
+    passwd = request.json.get("passwd")
+
+    if passwd == localConfig.LOGIN_PASSWD:
+        resp = make_response("success")
+    else:
+        resp = make_response("failed")
+    return resp
+
+
+app.run(localConfig.APP_HOST, localConfig.APP_PORT)
+sql.close()

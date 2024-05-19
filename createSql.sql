@@ -1,3 +1,7 @@
+drop database if exists `cbjRecorder`;
+create database `cbjRecorder` default character set utf8mb4 collate utf8mb4_general_ci;
+use `cbjRecorder`;
+
 create table `tags`
 (
     `tid`  int auto_increment primary key,
@@ -15,8 +19,9 @@ create table `tagTime`
 create table `ledger`
 (
     `id`      int auto_increment primary key,
-    `time`    datetime   not null,
-    `types`   varchar(8) not null,
+    `time`    datetime       not null,
+    `types`   varchar(8)     not null,
+    `amount`  decimal(12, 2) not null,
     `tags`    varchar(64),
     `comment` varchar(64)
 );

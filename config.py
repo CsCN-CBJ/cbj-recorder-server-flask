@@ -2,6 +2,15 @@ OPTIONS_KEY = 'text'
 OPTIONS_VALUE = 'value'
 DEF_OTHER = 'O'  # 其他
 DEF_DEFAULT = '-'  # 默认
+DEF_CHOICE_LENGTH = 8
+DEF_TAG_SEP = ','  # 分隔符
+LOG_PATH = 'log.txt'  # 日志路径
+BASE_LOGGER_NAME = 'server'
+API_LOGGER_NAME = f"{BASE_LOGGER_NAME}.api"
+STORAGE_LOGGER_NAME = f"{BASE_LOGGER_NAME}.recorder"
+MYSQL_LOGGER_NAME = f"{STORAGE_LOGGER_NAME}.mysql"
+
+VERIFICATION_COOKIE_NAME = 'token'
 # ========== 账单 ledger ==========
 # TOP
 LEDGER_TOP_COMMON_MEALS = 'M'  # 一日三餐

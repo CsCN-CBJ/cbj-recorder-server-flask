@@ -4,3 +4,6 @@ temp*
 build/
 .vscode/
 __pycache__/
+
+localConfig.py
+cbjLibrary/
