@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
 from config import *
@@ -21,7 +22,7 @@ def verifyToken(func):
         token = request.json.get(VERIFICATION_COOKIE_NAME)
         logger.info(f"function: {func.__name__}, token: {token}")
         if token is None or token != localConfig.LOGIN_PASSWD:
-            return make_response("failed")
+            return make_response("verification failed")
         return func(*args, **kwargs)
 
     return wrapper
@@ -91,7 +92,7 @@ def getTags():
 @verifyToken
 def addLedger():
     """记录"""
-    logger.info(f"ledger: {request.json}")
+    logger.info(f"add ledger: {request.json}")
     choice = request.json.get("choice")
     amount = request.json.get("amount")
     tags = request.json.get("tags")
@@ -103,6 +104,23 @@ def addLedger():
 
     sql.insertLedger(choice, amount, tags, comment)
     return make_response("success")
+
+
+@app.route("/get/ledger", methods=["GET"])
+def getLedger():
+    """获取记录"""
+    logger.info(f"get ledger: {request.args}")
+    ledgers = sql.getLedger()
+    ret = []
+    for ledger in ledgers:
+        ret.append([
+            datetime.strftime(ledger[0], "%y%m%d:%H"),
+            ledger[1],
+            str(ledger[2]),
+            ledger[3],
+            ledger[4],
+        ])
+    return jsonify(ret)
 
 
 @app.route("/login", methods=["POST"])

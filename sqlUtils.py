@@ -27,6 +27,14 @@ class RecorderSql:
         # 插入标签
         self.insertTags(tags, 1)
 
+    def getLedger(self):
+        """
+        获取账单
+        """
+        self.logger.info(f"Get ledger")
+        ret = self.sql.Select("SELECT `time`, `types`, `amount`, `tags`, `comment` FROM `ledger` ORDER BY `time` DESC")
+        return ret
+
     def insertTags(self, tags: str, tagType: int):
         """
         插入标签
