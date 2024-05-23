@@ -136,5 +136,5 @@ def login():
     return resp
 
 
-app.run(localConfig.APP_HOST, localConfig.APP_PORT)
+app.run(localConfig.APP_HOST, localConfig.APP_PORT, ssl_context=(localConfig.SSL_CRT, localConfig.SSL_KEY))
 sql.close()

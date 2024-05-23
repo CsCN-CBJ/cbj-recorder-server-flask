@@ -7,3 +7,6 @@ DATABASE = ""
 APP_HOST = ""
 APP_PORT = 5000
 LOGIN_PASSWD = ""
+
+SSL_CRT = ""
+SSL_KEY = ""
