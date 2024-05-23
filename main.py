@@ -6,6 +6,7 @@ import localConfig
 import logging
 from cbjLibrary.log import initLogger
 from sqlUtils import RecorderSql
+from options import *
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -31,52 +32,28 @@ def verifyToken(func):
 @app.route("/options", methods=["GET"])
 def getOptions():
     """获取所有选项"""
+    # 获取前序选项
     logger.info(f"get options: {request.args}")
     choice = request.args.get("choice")
-    ret = []
-    if choice is None:
-        ret = [
-            {OPTIONS_KEY: '一日三餐', OPTIONS_VALUE: LEDGER_TOP_COMMON_MEALS},
-            {OPTIONS_KEY: '零食饮料', OPTIONS_VALUE: LEDGER_TOP_SNACKS},
-            {OPTIONS_KEY: '营养保健品', OPTIONS_VALUE: LEDGER_TOP_SUPPLEMENTS},
-            {OPTIONS_KEY: '生活日用品', OPTIONS_VALUE: LEDGER_TOP_ESSENTIALS},
-            {OPTIONS_KEY: '固定支出', OPTIONS_VALUE: LEDGER_TOP_FIXED_COSTS},
-            {OPTIONS_KEY: '娱乐', OPTIONS_VALUE: LEDGER_TOP_ENTERTAINMENT},
-            {OPTIONS_KEY: '交通', OPTIONS_VALUE: LEDGER_TOP_TRANSPORTATION},
-            {OPTIONS_KEY: '医疗', OPTIONS_VALUE: LEDGER_TOP_MEDICAL},
-        ]
-    elif choice == LEDGER_TOP_COMMON_MEALS:
-        ret = [
-            {OPTIONS_KEY: '早餐', OPTIONS_VALUE: LEDGER_SEC_BREAKFAST},
-            {OPTIONS_KEY: '午餐', OPTIONS_VALUE: LEDGER_SEC_LUNCH},
-            {OPTIONS_KEY: '晚餐', OPTIONS_VALUE: LEDGER_SEC_DINNER},
-            {OPTIONS_KEY: '夜宵', OPTIONS_VALUE: LEDGER_SEC_SUPPER},
-        ]
-    elif choice == LEDGER_TOP_FIXED_COSTS:
-        ret = [
-            {OPTIONS_KEY: '电话', OPTIONS_VALUE: LEDGER_SEC_PHONE},
-            {OPTIONS_KEY: '会员', OPTIONS_VALUE: LEDGER_SEC_VIPS},
-        ]
-    elif choice == LEDGER_TOP_SUPPLEMENTS:
-        ret = [
-            {OPTIONS_KEY: '水果', OPTIONS_VALUE: LEDGER_SEC_FRUIT},
-            {OPTIONS_KEY: '牛奶', OPTIONS_VALUE: LEDGER_SEC_MILK},
-        ]
-    elif len(choice) == 2 and choice[0] == LEDGER_TOP_COMMON_MEALS:
-        ret = [
-            {OPTIONS_KEY: '饿了么159', OPTIONS_VALUE: LEDGER_TRD_MEAL_ELM9},
-            {OPTIONS_KEY: '饿了么158', OPTIONS_VALUE: LEDGER_TRD_MEAL_ELM8},
-            {OPTIONS_KEY: '美团159', OPTIONS_VALUE: LEDGER_TRD_MEAL_MT9},
-            {OPTIONS_KEY: '美团158', OPTIONS_VALUE: LEDGER_TRD_MEAL_MT8},
-            {OPTIONS_KEY: '一食堂', OPTIONS_VALUE: LEDGER_TRD_MEAL_1},
-            {OPTIONS_KEY: '二食堂', OPTIONS_VALUE: LEDGER_TRD_MEAL_2},
-            {OPTIONS_KEY: '三食堂', OPTIONS_VALUE: LEDGER_TRD_MEAL_3},
-            {OPTIONS_KEY: '四食堂', OPTIONS_VALUE: LEDGER_TRD_MEAL_4},
-            {OPTIONS_KEY: '五食堂(麦当劳)', OPTIONS_VALUE: LEDGER_TRD_MEAL_MDL},
-        ]
+    choice = "" if choice is None else choice
+
+    # 在分类树中查找
+    optionDict = ledgerOptions
+    for c in choice:
+        value = optionDict.get(c, "")
+        if value == "" and c != DEF_OTHER:
+            return make_response("invalid choice")
+        # 如果是元组则说明有子节点. 否则就是叶子节点, 下一级选项为空
+        optionDict = value[1] if isinstance(value, tuple) else {}
+
+    # 从这一级的字典中提取出TEXT与VALUE(抛弃children)
+    ret = [
+        {OPTIONS_VALUE: k, OPTIONS_TEXT: v[0] if isinstance(v, tuple) else v}
+        for k, v in optionDict.items()
+    ]
 
     if len(ret) != 0:
-        ret.append({OPTIONS_KEY: '其他', OPTIONS_VALUE: DEF_OTHER})
+        ret.append({OPTIONS_VALUE: DEF_OTHER, OPTIONS_TEXT: '其他'})
     return jsonify(ret)
 
 
