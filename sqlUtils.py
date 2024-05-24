@@ -13,7 +13,7 @@ class RecorderSql:
     def close(self):
         self.sql.CloseMysql()
 
-    def insertLedger(self, choice: str, amount: int, tags: str, comment: str):
+    def insertLedger(self, choice: str, amount: str, tags: str, comment: str):
         """
         插入账单
         """

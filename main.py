@@ -78,6 +78,8 @@ def addLedger():
         return make_response("missing arguments")
     if len(choice) != DEF_CHOICE_LENGTH or choice == DEF_DEFAULT * DEF_CHOICE_LENGTH:
         return make_response("invalid choice")
+    if amount == '':
+        return make_response("invalid amount")
 
     sql.insertLedger(choice, amount, tags, comment)
     return make_response("success")
