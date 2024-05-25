@@ -93,9 +93,9 @@ def getLedger():
     ret = []
     for ledger in ledgers:
         ret.append([
-            datetime.strftime(ledger[0], "%y%m%d:%H"),
-            ledger[1],
-            str(ledger[2]),
+            datetime.strftime(ledger[0], "%m%d%H"),
+            ledger[1].split(DEF_DEFAULT)[0],  # 去掉占位符
+            str(ledger[2]).rstrip('0').rstrip('.'),  # 去掉多余的0和小数点
             ledger[3],
             ledger[4],
         ])
