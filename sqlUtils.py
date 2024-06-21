@@ -31,14 +31,14 @@ class RecorderSql:
         """
         获取账单
         status: 1-3
-        1: 限制10条
+        1: 限制20条
         2: 一个月
         3: 所有
         """
         self.logger.info(f"Get ledger")
         sql = "SELECT `time`, `types`, `amount`, `tags`, `comment` FROM `ledger` "
         if status == 1:
-            sql += "ORDER BY `time` DESC LIMIT 10"
+            sql += "ORDER BY `time` DESC LIMIT 20"
         elif status == 2:
             sql += "WHERE time > DATE_SUB(NOW(), INTERVAL 1 MONTH) ORDER BY `time` DESC"
         elif status == 3:
