@@ -1,41 +1,65 @@
-doubleFloor = {'1': '一楼', '2': '二楼', }
-tripleFloor = {'1': '一楼', '2': '二楼', '3': '三楼', }
-phoneNumbers = {'9': '159', '8': '158', }
+class Options:
+    def __init__(self, text, value, children: "OptionList" = None):
+        self.text = text
+        self.value = value
+        self.children = children
 
-mealChoices = {
-    '1': ('一食堂', doubleFloor),
-    '2': ('二食堂', tripleFloor),
-    '3': ('三食堂', doubleFloor),
-    '4': ('四食堂', tripleFloor),
-    '5': '五食堂(麦当劳)',
-    'E': ('饿了么', phoneNumbers),
-    'M': ('美团', phoneNumbers),
-    'V': '平山村里',
-}
+    def getDict(self) -> dict:
+        ret = {"text": self.text, "value": self.value}
+        if self.children is not None:
+            ret["children"] = self.children.getList()
+        return ret
 
-ledgerOptions = {
-    'M': ('一日三餐', {
-        '1': ('早餐', mealChoices),
-        '2': ('午餐', mealChoices),
-        '3': ('晚餐', mealChoices),
-        '4': ('夜宵', {
-            'D': '门口小摊',
-        }),
-    }),
-    'S': '零食饮料',
-    'U': ('营养保健品', {
-        'F': '水果',
-        'M': '牛奶',
-        'S': '营养品',
-    }),
-    'E': '生活日用品',
-    'F': ('固定支出', {
-        'P': '电话',
-        'V': '会员',
-    }),
-    'N': ('娱乐', {
-        'E': '外出吃饭',
-    }),
-    'T': '交通',
-    'm': '医疗',
-}
+
+class OptionList:
+    def __init__(self, options: list[Options]):
+        self.options = options
+
+    def getList(self) -> list[dict]:
+        return [op.getDict() for op in self.options] + [{"text": "其他", "value": "O"}]
+
+
+doubleFloor = OptionList([
+    Options("一楼", "1"),
+    Options("二楼", "2"),
+])
+tripleFloor = OptionList([
+    Options("一楼", "1"),
+    Options("二楼", "2"),
+    Options("三楼", "3"),
+])
+phoneNumbers = OptionList([
+    Options("159", "9"),
+    Options("158", "8"),
+])
+
+mealChoices = OptionList([
+    Options("一食堂", "1", doubleFloor),
+    Options("二食堂", "2", tripleFloor),
+    Options("三食堂", "3", doubleFloor),
+    Options("四食堂", "4", tripleFloor),
+    Options("五食堂(麦当劳)", "5"),
+    Options("饿了么", "E", phoneNumbers),
+    Options("美团", "M", phoneNumbers),
+    Options("平山村里", "V"),
+])
+
+ledgerOptions = OptionList([
+    Options("一日三餐", "M", mealChoices),
+    Options("零食饮料", "S"),
+    Options("营养保健品", "U", OptionList([
+        Options("水果", "F"),
+        Options("牛奶", "M"),
+        Options("营养品", "S"),
+    ])),
+    Options("生活日用品", "E"),
+    Options("固定支出", "F", OptionList([
+        Options("电话", "P"),
+        Options("会员", "V"),
+    ])),
+    Options("娱乐", "N", OptionList([
+        Options("外出吃饭", "E"),
+    ])),
+    Options("交通", "T"),
+    Options("医疗", "m"),
+])

@@ -34,27 +34,7 @@ def getOptions():
     """获取所有选项"""
     # 获取前序选项
     logger.info(f"get options: {request.args}")
-    choice = request.args.get("choice")
-    choice = "" if choice is None else choice
-
-    # 在分类树中查找
-    optionDict = ledgerOptions
-    for c in choice:
-        value = optionDict.get(c, "")
-        if value == "" and c != DEF_OTHER:
-            return make_response("invalid choice")
-        # 如果是元组则说明有子节点. 否则就是叶子节点, 下一级选项为空
-        optionDict = value[1] if isinstance(value, tuple) else {}
-
-    # 从这一级的字典中提取出TEXT与VALUE(抛弃children)
-    ret = [
-        {OPTIONS_VALUE: k, OPTIONS_TEXT: v[0] if isinstance(v, tuple) else v}
-        for k, v in optionDict.items()
-    ]
-
-    if len(ret) != 0:
-        ret.append({OPTIONS_VALUE: DEF_OTHER, OPTIONS_TEXT: '其他'})
-    return jsonify(ret)
+    return jsonify(ledgerOptions.getList())
 
 
 @app.route("/tags", methods=["GET"])
