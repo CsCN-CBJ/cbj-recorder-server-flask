@@ -27,13 +27,26 @@ class RecorderSql:
         # 插入标签
         self.insertTags(tags, 1)
 
-    def getLedger(self):
+    def getLedger(self, status: int):
         """
         获取账单
+        status: 1-3
+        1: 限制10条
+        2: 一个月
+        3: 所有
         """
         self.logger.info(f"Get ledger")
-        ret = self.sql.Select("SELECT `time`, `types`, `amount`, `tags`, `comment` FROM `ledger` ORDER BY `time` DESC")
-        return ret
+        sql = "SELECT `time`, `types`, `amount`, `tags`, `comment` FROM `ledger` "
+        if status == 1:
+            sql += "ORDER BY `time` DESC LIMIT 10"
+        elif status == 2:
+            sql += "WHERE time > DATE_SUB(NOW(), INTERVAL 1 MONTH) ORDER BY `time` DESC"
+        elif status == 3:
+            sql += "ORDER BY `time` DESC"
+        else:
+            self.logger.error(f"Invalid status: {status}")
+            return None
+        return self.sql.Select(sql)
 
     def insertTags(self, tags: str, tagType: int):
         """

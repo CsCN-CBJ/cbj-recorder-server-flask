@@ -89,7 +89,11 @@ def addLedger():
 def getLedger():
     """获取记录"""
     logger.info(f"get ledger: {request.args}")
-    ledgers = sql.getLedger()
+    status = request.args.get("status")
+    if status is None or not 1 <= int(status) <= 3:
+        return make_response("invalid status")
+    status = int(status)
+    ledgers = sql.getLedger(status)
     ret = []
     for ledger in ledgers:
         ret.append([
