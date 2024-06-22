@@ -56,7 +56,9 @@ def addLedger():
     comment = request.json.get("comment")
     if choice is None or amount is None or tags is None or comment is None:
         return make_response("missing arguments")
-    if len(choice) != DEF_CHOICE_LENGTH or choice == DEF_DEFAULT * DEF_CHOICE_LENGTH:
+    choice = str(choice)
+    if len(choice) != DEF_CHOICE_LENGTH or choice == DEF_DEFAULT * DEF_CHOICE_LENGTH\
+            or ledgerOptions.getChild(choice.strip(DEF_DEFAULT)) is not None:
         return make_response("invalid choice")
     if amount == '':
         return make_response("invalid amount")

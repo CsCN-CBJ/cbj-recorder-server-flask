@@ -18,6 +18,22 @@ class OptionList:
     def getList(self) -> list[dict]:
         return [op.getDict() for op in self.options] + [{"text": "其他", "value": "O"}]
 
+    def getChild(self, value: str):
+        """
+        递归获取选项字符串对应的子选项
+        """
+        for op in self.options:
+            if op.value != value[0]:
+                continue
+            if len(value) > 1:
+                return op.children.getChild(value[1:])
+            return op.children
+        # 允许"其他"选项
+        if value == "O":
+            return None
+        # 非法选项
+        raise ValueError(f"Invalid value: {value}")
+
 
 doubleFloor = OptionList([
     Options("一楼", "1"),
