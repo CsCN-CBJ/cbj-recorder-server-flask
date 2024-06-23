@@ -79,3 +79,38 @@ ledgerOptions = OptionList([
     Options("交通", "T"),
     Options("医疗", "m"),
 ])
+
+timeOptions = OptionList([
+    Options("工作", "W", OptionList([
+        Options("主线", "B"),
+        Options("自我", "S"),
+        Options("上课", "C"),
+        Options("作业", "H"),
+    ])),
+    Options("睡眠", "Z", OptionList([
+        Options("夜晚", "0"),
+        Options("午睡", "2"),
+        Options("黄昏", "3"),
+    ])),
+    Options("运动", "X", OptionList([
+        Options("跑步", "R"),
+        Options("健身", "K"),
+        Options("游泳", "S"),
+    ])),
+    Options("日常", "D", OptionList([
+        Options("饮食", "E"),
+        Options("洗漱厕", "W"),
+        Options("洗衣服", "C"),
+        Options("聊天", "T"),
+    ])),
+    Options("娱乐", "E", OptionList([
+        Options("手机", "P", OptionList([
+            Options("通用", "C"),
+            Options("睡前", "B"),
+            Options("睡后", "A"),
+        ])),
+        Options("电脑", "C"),
+        Options("开黑", "F"),
+        Options("发呆", "T"),
+    ])),
+])

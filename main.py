@@ -29,12 +29,33 @@ def verifyToken(func):
     return wrapper
 
 
+@app.route("/login", methods=["POST"])
+def login():
+    """登录"""
+    logger.info(f"login: {request.json}")
+    passwd = request.json.get("passwd")
+
+    if passwd == localConfig.LOGIN_PASSWD:
+        resp = make_response("success")
+    else:
+        resp = make_response("failed")
+    return resp
+
+
 @app.route("/options", methods=["GET"])
 def getOptions():
     """获取所有选项"""
-    # 获取前序选项
     logger.info(f"get options: {request.args}")
-    return jsonify(ledgerOptions.getList())
+    p = request.args.get("p")
+    if p is None:
+        return make_response("missing arguments")
+
+    if p == 'ledger':
+        return jsonify(ledgerOptions.getList())
+    elif p == 'time':
+        return jsonify(timeOptions.getList())
+    else:
+        return make_response("invalid arguments")
 
 
 @app.route("/tags", methods=["GET"])
@@ -45,7 +66,7 @@ def getTags():
     return jsonify(ret)
 
 
-@app.route("/ledger", methods=["POST"])
+@app.route("/add/ledger", methods=["POST"])
 @verifyToken
 def addLedger():
     """记录"""
@@ -57,7 +78,7 @@ def addLedger():
     if choice is None or amount is None or tags is None or comment is None:
         return make_response("missing arguments")
     choice = str(choice)
-    if len(choice) != DEF_CHOICE_LENGTH or choice == DEF_DEFAULT * DEF_CHOICE_LENGTH\
+    if len(choice) != DEF_CHOICE_LENGTH or choice == DEF_DEFAULT * DEF_CHOICE_LENGTH \
             or ledgerOptions.getChild(choice.strip(DEF_DEFAULT)) is not None:
         return make_response("invalid choice")
     if amount == '':
@@ -86,19 +107,6 @@ def getLedger():
             ledger[4],
         ])
     return jsonify(ret)
-
-
-@app.route("/login", methods=["POST"])
-def login():
-    """登录"""
-    logger.info(f"login: {request.json}")
-    passwd = request.json.get("passwd")
-
-    if passwd == localConfig.LOGIN_PASSWD:
-        resp = make_response("success")
-    else:
-        resp = make_response("failed")
-    return resp
 
 
 app.run(localConfig.APP_HOST, localConfig.APP_PORT, ssl_context=(localConfig.SSL_CRT, localConfig.SSL_KEY))
