@@ -1,4 +1,3 @@
-from datetime import datetime
 from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
 from config import *
@@ -63,8 +62,16 @@ def getOptions():
 def getTags():
     """获取所有标签"""
     logger.info(f"get tags: {request.args}")
-    ret = sql.getTags(1)
-    return jsonify(ret)
+    p = request.args.get("p")
+    if p is None:
+        return make_response("missing arguments")
+
+    if p == 'ledger':
+        return sql.getTags(1)
+    elif p == 'time':
+        return sql.getTags(2)
+    else:
+        return make_response("invalid arguments")
 
 
 @app.route("/add/ledger", methods=["POST"])
