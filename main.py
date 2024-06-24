@@ -7,6 +7,7 @@ import logging
 from cbjLibrary.log import initLogger
 from sqlUtils import RecorderSql
 from options import *
+from utils import *
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -107,6 +108,77 @@ def getLedger():
             ledger[4],
         ])
     return jsonify(ret)
+
+
+@app.route("/add/time", methods=["POST"])
+def addTime():
+    """记录时间"""
+    logger.info(f"add time: {request.json}")
+    action = request.json.get("action")
+    choice = request.json.get("choice")
+    time = request.json.get("time")
+    tags = request.json.get("tags")
+    comment = request.json.get("comment")
+    if action is None or choice is None or time is None or tags is None or comment is None:
+        return make_response("missing arguments")
+    if len(choice) != DEF_CHOICE_LENGTH or \
+            (choice != DEF_DEFAULT * DEF_CHOICE_LENGTH and timeOptions.getChild(choice.strip(DEF_DEFAULT)) is not None):
+        # 注意这里允许默认选项
+        return make_response("invalid choice")
+    time = timeStrToDateObj(time)
+    if time is None:
+        return make_response("invalid time")
+
+    def writeToTxt(statusRec: str, record: list[str]):
+        assert statusRec in ['open', 'close'] and len(record) == 4
+        with open("log/preTime.txt", "w") as fw:
+            fw.write(statusRec + "\n")
+            fw.write("\n".join(record))
+
+    # 读取先前的时间记录
+    try:
+        f = open("log/preTime.txt", "r")
+    except FileNotFoundError:
+        # 第一次记录时间
+        writeToTxt('open', [choice, time, tags, comment])
+        return make_response("success")
+    else:
+        content = f.read().split("\n")
+        assert len(content) == 5
+        status, preChoice, preTime, preTags, preComment = content
+        preTime = timeStrToDateObj(preTime)
+        f.close()
+    if time <= preTime:
+        return make_response("invalid time")
+
+    # 进行逻辑处理与sql插入
+    if status == 'open':
+        if action == 'start':
+            sql.insertTime(preChoice, preTime, time, preTags, preComment)
+        elif action == 'break':
+            sql.insertTime(preChoice, preTime, time, preTags, preComment)
+        elif action == 'end':
+            sql.insertTime(choice, preTime, time, tags, comment)
+        else:
+            return make_response("fatal error: invalid action")
+    elif status == 'close':
+        if action == 'start':
+            if preTime < time - timedelta(minutes=5):
+                print(preTime, time - timedelta(minutes=5))
+                return make_response("时间间隔过长")
+            time = preTime
+        elif action == 'break':
+            return make_response("invalid action")
+        elif action == 'end':
+            sql.insertTime(choice, preTime, time, tags, comment)
+        else:
+            return make_response("fatal error: invalid action")
+    else:
+        raise ValueError(f"Invalid status: {status}")
+
+    nowStatus = 'open' if action == 'start' else 'close'
+    writeToTxt(nowStatus, [choice, time.strftime('%d%H%M'), tags, comment])
+    return make_response("success")
 
 
 app.run(localConfig.APP_HOST, localConfig.APP_PORT, ssl_context=(localConfig.SSL_CRT, localConfig.SSL_KEY))

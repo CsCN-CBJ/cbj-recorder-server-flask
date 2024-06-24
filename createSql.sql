@@ -21,9 +21,10 @@ create table `ledger`
     `id`      int auto_increment primary key,
     `time`    datetime       not null,
     `types`   varchar(8)     not null,
-    `amount`  decimal(12, 2) not null,
     `tags`    varchar(64),
-    `comment` varchar(64)
+    `comment` varchar(64),
+
+    `amount`  decimal(12, 2) not null
 );
 
 # 时间

@@ -1,3 +1,4 @@
+from datetime import datetime
 from cbjLibrary.cbjSqlFunc import MysqlConnector
 from config import *
 from localConfig import USER, PASSWORD, HOST, DATABASE
@@ -85,3 +86,19 @@ class RecorderSql:
         ret = self.sql.Select(f"SELECT `name` FROM `tags` where `type`={tagType}")
         self.logger.info(f"Get tags: {ret}")
         return list(map(lambda x: x[0], ret))
+
+    def insertTime(self, choice: str, startTime: datetime, endTime: datetime, tags: str, comment: str):
+        """
+        插入时间
+        """
+        startTime = startTime.strftime('%Y-%m-%d %H:%M:%S')
+        endTime = endTime.strftime('%Y-%m-%d %H:%M:%S')
+        self.logger.info(f"Insert time: {choice}, {startTime}, {endTime}, {tags}, {comment}")
+        # 插入时间
+        self.sql.Execute(
+            f"INSERT INTO `time` (`types`, `time`, `endTime`, `tags`, `comment`) "
+            f"VALUES ('{choice}', '{startTime}', '{endTime}', '{tags}', '{comment}')"
+        )
+
+        # 插入标签
+        self.insertTags(tags, 2)
