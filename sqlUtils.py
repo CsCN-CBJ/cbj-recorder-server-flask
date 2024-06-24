@@ -102,3 +102,24 @@ class RecorderSql:
 
         # 插入标签
         self.insertTags(tags, 2)
+
+    def getTime(self, status: int):
+        """
+        获取时间记录
+        status: 1-3
+        1: 限制20条
+        2: 一个星期
+        3: 所有
+        """
+        self.logger.info(f"Get ledger")
+        sql = "SELECT `time`, `endTime`, `types`, `tags`, `comment` FROM `time` "
+        if status == 1:
+            sql += "ORDER BY `time` DESC LIMIT 20"
+        elif status == 2:
+            sql += "WHERE time > DATE_SUB(NOW(), INTERVAL 1 WEEK) ORDER BY `time` DESC"
+        elif status == 3:
+            sql += "ORDER BY `time` DESC"
+        else:
+            self.logger.error(f"Invalid status: {status}")
+            return None
+        return self.sql.Select(sql)

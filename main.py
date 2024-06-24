@@ -181,5 +181,26 @@ def addTime():
     return make_response("success")
 
 
+@app.route("/get/time", methods=["GET"])
+def getTime():
+    """获取记录"""
+    logger.info(f"get time: {request.args}")
+    status = request.args.get("status")
+    if status is None or not 1 <= int(status) <= 3:
+        return make_response("invalid status")
+    status = int(status)
+    ledgers = sql.getTime(status)
+    ret = []
+    for ledger in ledgers:
+        ret.append([
+            datetime.strftime(ledger[0], "%d%H%M"),
+            datetime.strftime(ledger[1], "%d%H%M"),
+            ledger[2].split(DEF_DEFAULT)[0],  # 去掉占位符
+            ledger[3],
+            ledger[4],
+        ])
+    return jsonify(ret)
+
+
 app.run(localConfig.APP_HOST, localConfig.APP_PORT, ssl_context=(localConfig.SSL_CRT, localConfig.SSL_KEY))
 sql.close()
