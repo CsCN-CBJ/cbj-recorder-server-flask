@@ -140,7 +140,7 @@ def addTime():
         f = open("log/preTime.txt", "r")
     except FileNotFoundError:
         # 第一次记录时间
-        writeToTxt('open', [choice, time, tags, comment])
+        writeToTxt('open', [choice, time.strftime("%d%H%M"), tags, comment])
         return make_response("success")
     else:
         content = f.read().split("\n")
