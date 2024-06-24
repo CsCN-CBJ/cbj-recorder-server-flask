@@ -198,6 +198,23 @@ def getTime():
     status = int(status)
     ledgers = sql.getTime(status)
     ret = []
+
+    # 读取并返回当前时间记录状态
+    try:
+        with open("log/preTime.txt", "r") as f:
+            content = f.read().split("\n")
+            assert len(content) == 5
+            status, preChoice, preTime, preTags, preComment = content
+            ret.append([
+                preTime,
+                status,
+                preChoice.strip(DEF_DEFAULT),
+                preTags,
+                preComment,
+            ])
+    except FileNotFoundError:
+        pass
+
     for ledger in ledgers:
         ret.append([
             datetime.strftime(ledger[0], "%d%H%M"),
