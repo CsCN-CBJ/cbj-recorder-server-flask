@@ -34,6 +34,22 @@ class OptionList:
         # 非法选项
         raise ValueError(f"Invalid value: {value}")
 
+    def getName(self, value: str):
+        """
+        递归获取选项值对应的名字
+        """
+        for op in self.options:
+            if op.value != value[0]:
+                continue
+            if len(value) > 1:
+                return op.children.getName(value[1:])
+            return op.text
+        # 允许"其他"选项
+        if value == "O":
+            return "其他"
+        # 非法选项
+        raise ValueError(f"Invalid value: {value}")
+
 
 doubleFloor = OptionList([
     Options("一楼", "1"),

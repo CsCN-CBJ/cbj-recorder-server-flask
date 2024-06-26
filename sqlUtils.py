@@ -111,7 +111,7 @@ class RecorderSql:
         2: 一个星期
         3: 所有
         """
-        self.logger.info(f"Get ledger")
+        self.logger.info(f"Get time")
         sql = "SELECT `time`, `endTime`, `types`, `tags`, `comment` FROM `time` "
         if status == 1:
             sql += "ORDER BY `time` DESC LIMIT 20"
@@ -122,4 +122,14 @@ class RecorderSql:
         else:
             self.logger.error(f"Invalid status: {status}")
             return None
+        return self.sql.Select(sql)
+
+    def getTimeInDay(self, date: datetime):
+        """
+        获取某一天的时间记录
+        """
+        date = date.strftime('%Y-%m-%d')
+        self.logger.info(f"Get time in day: {date}")
+        sql = f"SELECT `time`, `endTime`, `types` FROM `time` " \
+              f"WHERE DATE(`time`) = '{date}' or DATE(`endTime`) = '{date}'"
         return self.sql.Select(sql)

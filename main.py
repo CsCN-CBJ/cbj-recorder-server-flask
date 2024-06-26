@@ -201,10 +201,33 @@ def getTime():
     """获取记录"""
     logger.info(f"get time: {request.args}")
     status = request.args.get("status")
-    if status is None or not 1 <= int(status) <= 3:
+    if status is None:
         return makeFailedResponse("invalid status")
+
+    # 读取某一天的记录
+    if len(status) == 6:
+        date = datetime.strptime(status, "%y%m%d")
+        if date is None:
+            return makeFailedResponse("invalid date")
+        res = sql.getTimeInDay(date)
+        from collections import defaultdict
+        counter = defaultdict(int)
+        for row in res:
+            startTime: datetime
+            endTime: datetime
+            startTime, endTime, types = row
+            if startTime.date() < date.date():
+                startTime = date
+            if endTime.date() > date.date():
+                endTime = date + timedelta(days=1)
+            # 统计分钟数, 只统计第一个大类
+            counter[types[0]] += (endTime - startTime).seconds // 60
+        ret = [{"name": timeOptions.getName(k), "value": f"{v / 60:.1f}"} for k, v in counter.items()]
+        return jsonify(ret)
+
+    # 读取当天的记录
     status = int(status)
-    ledgers = sql.getTime(status)
+    res = sql.getTime(1)  # 仅回复当天记录
     ret = []
 
     # 读取并返回当前时间记录状态
@@ -223,13 +246,13 @@ def getTime():
     except FileNotFoundError:
         pass
 
-    for ledger in ledgers:
+    for row in res:
         ret.append([
-            datetime.strftime(ledger[0], "%d%H%M"),
-            datetime.strftime(ledger[1], "%d%H%M"),
-            ledger[2].split(DEF_DEFAULT)[0],  # 去掉占位符
-            ledger[3],
-            ledger[4],
+            datetime.strftime(row[0], "%d%H%M"),
+            datetime.strftime(row[1], "%d%H%M"),
+            row[2].split(DEF_DEFAULT)[0],  # 去掉占位符
+            row[3],
+            row[4],
         ])
     return jsonify(ret)
 
