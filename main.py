@@ -16,6 +16,14 @@ logger = logging.getLogger(API_LOGGER_NAME)
 sql = RecorderSql(logging.getLogger(STORAGE_LOGGER_NAME))
 
 
+def makeSuccessResponse():
+    return make_response("success")
+
+
+def makeFailedResponse(response: str):
+    return make_response(response, 206)
+
+
 def verifyToken(func):
     """验证POST的token"""
 
@@ -23,7 +31,7 @@ def verifyToken(func):
         token = request.json.get(VERIFICATION_COOKIE_NAME)
         logger.info(f"function: {func.__name__}, token: {token}")
         if token is None or token != localConfig.LOGIN_PASSWD:
-            return make_response("verification failed")
+            return makeFailedResponse("verification failed")
         return func(*args, **kwargs)
 
     return wrapper
@@ -48,14 +56,14 @@ def getOptions():
     logger.info(f"get options: {request.args}")
     p = request.args.get("p")
     if p is None:
-        return make_response("missing arguments")
+        return makeFailedResponse("missing arguments")
 
     if p == 'ledger':
         return jsonify(ledgerOptions.getList())
     elif p == 'time':
         return jsonify(timeOptions.getList())
     else:
-        return make_response("invalid arguments")
+        return makeFailedResponse("invalid arguments")
 
 
 @app.route("/tags", methods=["GET"])
@@ -64,14 +72,14 @@ def getTags():
     logger.info(f"get tags: {request.args}")
     p = request.args.get("p")
     if p is None:
-        return make_response("missing arguments")
+        return makeFailedResponse("missing arguments")
 
     if p == 'ledger':
         return sql.getTags(1)
     elif p == 'time':
         return sql.getTags(2)
     else:
-        return make_response("invalid arguments")
+        return makeFailedResponse("invalid arguments")
 
 
 @app.route("/add/ledger", methods=["POST"])
@@ -84,16 +92,16 @@ def addLedger():
     tags = request.json.get("tags")
     comment = request.json.get("comment")
     if choice is None or amount is None or tags is None or comment is None:
-        return make_response("missing arguments")
+        return makeFailedResponse("missing arguments")
     choice = str(choice)
     if len(choice) != DEF_CHOICE_LENGTH or choice == DEF_DEFAULT * DEF_CHOICE_LENGTH \
             or ledgerOptions.getChild(choice.strip(DEF_DEFAULT)) is not None:
-        return make_response("invalid choice")
+        return makeFailedResponse("invalid choice")
     if amount == '':
-        return make_response("invalid amount")
+        return makeFailedResponse("invalid amount")
 
     sql.insertLedger(choice, amount, tags, comment)
-    return make_response("success")
+    return makeSuccessResponse()
 
 
 @app.route("/get/ledger", methods=["GET"])
@@ -102,7 +110,7 @@ def getLedger():
     logger.info(f"get ledger: {request.args}")
     status = request.args.get("status")
     if status is None or not 1 <= int(status) <= 3:
-        return make_response("invalid status")
+        return makeFailedResponse("invalid status")
     status = int(status)
     ledgers = sql.getLedger(status)
     ret = []
@@ -127,14 +135,14 @@ def addTime():
     tags = request.json.get("tags")
     comment = request.json.get("comment")
     if action is None or choice is None or time is None or tags is None or comment is None:
-        return make_response("missing arguments")
+        return makeFailedResponse("missing arguments")
     if len(choice) != DEF_CHOICE_LENGTH or \
             (choice != DEF_DEFAULT * DEF_CHOICE_LENGTH and timeOptions.getChild(choice.strip(DEF_DEFAULT)) is not None):
         # 注意这里允许默认选项
-        return make_response("invalid choice")
+        return makeFailedResponse("invalid choice")
     time = timeStrToDateObj(time)
     if time is None:
-        return make_response("invalid time")
+        return makeFailedResponse("invalid time")
 
     def writeToTxt(statusRec: str, record: list[str]):
         assert statusRec in ['open', 'close'] and len(record) == 4
@@ -148,7 +156,7 @@ def addTime():
     except FileNotFoundError:
         # 第一次记录时间
         writeToTxt('open', [choice, time.strftime("%d%H%M"), tags, comment])
-        return make_response("success")
+        return makeSuccessResponse()
     else:
         content = f.read().split("\n")
         assert len(content) == 5
@@ -156,7 +164,7 @@ def addTime():
         preTime = timeStrToDateObj(preTime)
         f.close()
     if time <= preTime:
-        return make_response("invalid time")
+        return makeFailedResponse("invalid time")
 
     # 进行逻辑处理与sql插入
     if status == 'open':
@@ -167,25 +175,25 @@ def addTime():
         elif action == 'end':
             sql.insertTime(choice, preTime, time, tags, comment)
         else:
-            return make_response("fatal error: invalid action")
+            return makeFailedResponse("fatal error: invalid action")
     elif status == 'close':
         if action == 'start':
             if preTime < time - timedelta(minutes=5):
                 print(preTime, time - timedelta(minutes=5))
-                return make_response("时间间隔过长")
+                return makeFailedResponse("时间间隔过长")
             time = preTime
         elif action == 'break':
-            return make_response("invalid action")
+            return makeFailedResponse("invalid action")
         elif action == 'end':
             sql.insertTime(choice, preTime, time, tags, comment)
         else:
-            return make_response("fatal error: invalid action")
+            return makeFailedResponse("fatal error: invalid action")
     else:
         raise ValueError(f"Invalid status: {status}")
 
     nowStatus = 'open' if action == 'start' else 'close'
     writeToTxt(nowStatus, [choice, time.strftime('%d%H%M'), tags, comment])
-    return make_response("success")
+    return makeSuccessResponse()
 
 
 @app.route("/get/time", methods=["GET"])
@@ -194,7 +202,7 @@ def getTime():
     logger.info(f"get time: {request.args}")
     status = request.args.get("status")
     if status is None or not 1 <= int(status) <= 3:
-        return make_response("invalid status")
+        return makeFailedResponse("invalid status")
     status = int(status)
     ledgers = sql.getTime(status)
     ret = []
